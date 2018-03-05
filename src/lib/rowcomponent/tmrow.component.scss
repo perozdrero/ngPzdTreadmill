@@ -1,0 +1,19 @@
+.pzdtmrow {
+    // display: flex;
+    background-color: transparent;
+    display: block;
+    box-sizing: border-box;
+    user-drag: none; 
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    border: solid 1px gray;
+    flex: 1 1 auto;
+    
+
+    &.pzdselected {
+        background-color: gray;
+    }
+}

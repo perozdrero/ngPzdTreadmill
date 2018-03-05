@@ -1,0 +1,5 @@
+
+<div draggable="false" class="pzdtmrow" *ngIf="cellsObs">   
+        <pzd-tmcell draggable="false" *ngFor="let item of (cellsObs | async);" [Field]="item" [UpdateFN]="addCellFn()"  ></pzd-tmcell> 
+</div>
+ 

@@ -1,0 +1,9 @@
+<div draggable="false" (wheel)="onwheel($event)" class="pzdtminner" #scrollDiv>
+    <ng-container *ngIf="(firstPageObs) !== undefined">
+        <!-- <pzd-tmrow  
+            *ngFor="let item of (firstPageObs | async).items; let ind=index;"
+            [style.order]="FlexObsArray[ind] | async"></pzd-tmrow> -->
+            <pzd-tmrow  
+            *ngFor="let item of (firstPageObs | async).items; let ind=index;"></pzd-tmrow>
+    </ng-container>
+</div>
