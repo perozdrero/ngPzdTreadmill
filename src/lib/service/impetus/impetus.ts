@@ -4,10 +4,6 @@ const bounceDeceleration = 0.04;
 const bounceAcceleration = 0.11;
 
 
-// fixes weird safari 10 bug where preventDefault is prevented
-// @see https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356
-window.addEventListener('touchmove', null);
-
 
 export class Impetus {
     private boundXmin: number;
@@ -202,27 +198,11 @@ export class Impetus {
      * @returns {Object} with x, y, and id properties
      */
     private normalizeEvent(ev: any): {x: number, y: number, id: number} {
-        if (ev.pointers === undefined) { debugger; }
         return {
             x: ev.pointers[ev.pointers.length - 1].clientX,
             y: - ev.pointers[ev.pointers.length - 1].clientY, // - this.getImpetusDelta(),
             id: null
         };
-
-        // if (ev.type === 'touchmove' || ev.type === 'touchstart' || ev.type === 'touchend') {
-        //     const touch = ev.targetTouches[0] || ev.changedTouches[0];
-        //     return {
-        //         x: touch.clientX,
-        //         y: - touch.clientY,  // - this.getImpetusDelta(),
-        //         id: touch.identifier
-        //     };
-        // } else {
-        //     return {
-        //         x: ev.clientX,
-        //         y: - ev.clientY, // - this.getImpetusDelta(),
-        //         id: null
-        //     };
-        // }
     }
 
     /**

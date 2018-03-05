@@ -22,7 +22,7 @@ export class TreadmillService {
     private topPos = 0;
     private pagesOrderFixedGrid: number[] = [-1, -1, -1];
     private orderToBe: {dataPageNo: number, pageArrayIndex: any}[] = [];
-
+    private passedItems: Array<{index: number, height: number}> = [];
     set rowUpdateRowFN( o: {
         updateFn: (item: ITMitemInterface) => void,
         getHeightFn: () => number,
@@ -81,41 +81,33 @@ export class TreadmillService {
         // console.log('inde ' + ind + ' ,Novi flex ' + flexOrder);
 
         if (ind === 0) {
+            const iteminfo = {index: 0, height: 0};
             // row height Fns
             const rowFn = this.rowGetItemHeightFns.shift();
+            iteminfo.height = rowFn();
             this.rowGetItemHeightFns.push(rowFn);
             // set index FN
             const indexFn = this.itemsGetItemIndex.shift();
             this.itemsGetItemIndex.push(indexFn);
-            // set index FN
+            iteminfo.index = indexFn();
+            this.passedItems.push(iteminfo);
+            // set item FN
             const updateItemFN = this.rowItemsUpdateFns.shift();
             this.rowItemsUpdateFns.push(updateItemFN);
             // update visible page with new data
             const newDataIndex = indexFn() + this.visiblePageSize;
             const newPageno = Math.floor(newDataIndex / this.dataPageSize);
             const pi = this.pagesOrderFixedGrid.findIndex(o => o === newPageno);
-            // let lastFn = () => undefined;
             if ((pi !== -1) && (this.dataPages[pi].hasData === true)) {
                 const inPageIndex = newDataIndex % this.dataPageSize;
                 const item = this.dataPages[pi].items[inPageIndex];
-                // if (item.index !== flexOrder) { debugger; }
-                // lastFn = () =>
                 this.rowItemsUpdateFns[this.visiblePageSize - 1](item);
             } else {
-                debugger;
                 console.log('##### buffer a ne bi trebao');
                 // lastFn = () =>
                 this.itemsToUpdateFromDB.push( { ind: newDataIndex,
                     fn: (item: ITMitemInterface) => this.rowItemsUpdateFns[this.visiblePageSize - 1](item) });
             }
-            // set flex positions fns
-            // this.updateFlexFns[ind](flexOrder);
-            // setTimeout that style.order be readable and assert if needed
-            // setTimeout(() => {
-                // lastFn();
-                // const flexFn = this.updateFlexFns.shift();
-                // this.updateFlexFns.push(flexFn);
-            // }, 0);
         } else {
             // row height Fns
             const rowFn = this.rowGetItemHeightFns.pop();

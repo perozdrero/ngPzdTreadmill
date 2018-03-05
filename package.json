@@ -6,7 +6,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build --prod",
-    "ghbuild": "ng build --prod --base-href \"https://perozdrero.github.io/ngPzdTreadmill/\"",
+    "ghbuild": "ng build --prod --base-href \"https://perozdrero.github.io/ngPzdTreadmill/demo/\" -op ./dist/",
     "deploygh": "ngh",
     "test": "ng test",
     "lint": "ng lint",

@@ -39,7 +39,7 @@ import { Options } from 'selenium-webdriver/opera';
   ],
   template: `
     <div class="text-center">
-      <h1>Swipe horizontally or pull with mouse</h1>
+      <h1>Swipe vertically or pull with mouse</h1>
     </div>
     <div><pzd-tredmill class="pzd" [visiblePageSize]="10" [dataPageSize]="20" [itemFields]="['index','title','pageid','snippet']" [getdatafn]="getDataFN"></pzd-tredmill></div>`
 })
@@ -56,9 +56,9 @@ export class DemoComponent {
                   'utf8': '1',
                   'srprop': 'snippet',
                   'continue': '-||',
-                  'sroffset': ('' +pageNum * pageSize),
+                  'sroffset': ('' + pageNum * pageSize),
                   'srsearch': '' + term,
-                  'srlimit': ''+pageSize
+                  'srlimit': '' + pageSize
 
 
                 }
