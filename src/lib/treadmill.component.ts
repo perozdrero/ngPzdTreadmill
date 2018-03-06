@@ -60,7 +60,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       }
       this.scrollDiv = this.scrollElement.nativeElement;
       this.hammerElemnt = new Hammer(this.scrollDiv);
-      this.hammerElemnt.get('pan').set({ direction: Hammer.DIRECTION_VERTICAL });
+      this.hammerElemnt.get('pan').set({ direction: Hammer.DIRECTION_VERTICAL, threshold: 0 });
       this.hammerElemnt.on('panstart', (ev: any) => this.impetus.onDown(ev));
       this.treadmillService.itemFields = this.itemFields;
       this.treadmillService.count = this.count;

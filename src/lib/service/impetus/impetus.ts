@@ -199,8 +199,8 @@ export class Impetus {
      */
     private normalizeEvent(ev: any): {x: number, y: number, id: number} {
         return {
-            x: ev.pointers[ev.pointers.length - 1].clientX,
-            y: - ev.pointers[ev.pointers.length - 1].clientY, // - this.getImpetusDelta(),
+            x:  ev.changedPointers[0].clientX,
+            y: - ev.changedPointers[0].clientY, // ev.pointers[ev.pointers.length - 1].clientY, // - this.getImpetusDelta(),
             id: null
         };
     }
@@ -211,6 +211,7 @@ export class Impetus {
      */
     onDown(ev: any) {
         this.resetImpetus();
+        // console.log('Ondown ', ev);
         const event = this.normalizeEvent(ev);
         if (!this.pointerActive && !this.paused) {
             this.pointerActive = true;
@@ -229,6 +230,7 @@ export class Impetus {
      * @param  {Object} ev Normalized event
      */
     onMove(ev: Event) {
+        // console.log('Onmove ', ev);
         ev.preventDefault();
         const event = this.normalizeEvent(ev);
 
@@ -245,6 +247,7 @@ export class Impetus {
      * @param {Object} ev Normalized event
      */
     onUp(ev: any) {
+        // console.log('Onup ', ev);
         const event = this.normalizeEvent(ev);
 
         if (this.pointerActive && event.id === this.pointerId) {
