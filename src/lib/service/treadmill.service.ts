@@ -148,7 +148,7 @@ export class TreadmillService {
     }
     getRowHeightForReverseOrder() {
         const lastItem = this.passedItems.pop();
-        console.log('Rikverx '  + lastItem.height);
+        // console.log('Rikverx '  + lastItem.height);
         return lastItem.height;
     }
     /**
