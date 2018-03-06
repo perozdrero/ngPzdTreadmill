@@ -84,7 +84,6 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
     const np =  (impetusPos - constImpetusResetpos - (this.impetusWholeRowsDelta || 0) + this.lastInRowDelta);
     // if (Math.abs(np) / this.rowHeight < 0 ) {debugger;}
     const delta = np  % this.rowHeight;
-    this.lastDelta = delta;
     const nr = Math.floor( np / this.rowHeight);
     if (nr !== 0) {
       if ((this.dataIndexTopPos + nr) < 0) {return; }
@@ -96,11 +95,13 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
         this.rowHeight = this.treadmillService.rowFns[1].getHeightFn();
         this.setTranslate(delta);
         this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
+        this.lastDelta = delta;
       } else {
         this.rowHeight = this.treadmillService.getRowHeightForReverseOrder();
         const newDelta = (this.rowHeight + delta);
         this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
         this.setTranslate(newDelta);
+        this.lastDelta = newDelta;
       }
       this.attachImpetusListeners();
       this.treadmillService.onScroll(this.dataIndexTopPos);
