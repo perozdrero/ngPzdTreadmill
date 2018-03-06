@@ -100,9 +100,9 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       this.setTranslate(delta);
       this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
       this.lastDelta = delta;
-      setTimeout(() => {
+      // setTimeout(() => {
         this.treadmillService.onScroll(this.dataIndexTopPos);
-      }, 0);
+      // }, 0);
     } else {
       this.setTranslate(delta);
     }
