@@ -1,0 +1,31 @@
+.text-center {
+    opacity: 1;
+    z-index: 100;
+  }
+  .pzd {
+    z-index: 50;
+    flex: 1 10 100%;
+    overflow:hidden;
+    user-drag: none; 
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    // position: relative;
+    // display: block;
+    // height: 100%;
+  }
+  .tmfullheight {
+    height: 100%;
+  }
+
+  .pzdoutline {
+    transition-property: background;
+    transition-duration: 0.5s;
+    transition-timing-function: linear;
+  }
+
+  .pzdoutlinestart {
+    background-color: red;
+}

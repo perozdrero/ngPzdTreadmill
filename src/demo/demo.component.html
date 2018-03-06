@@ -1,0 +1,22 @@
+<div class="flexContainer flexItem pzd">
+    <main class="flexItem whiteBackground main">
+        <pzd-tredmill class="pzd  tmfullheight" 
+            [visiblePageSize]="10" 
+            [dataPageSize]="20" 
+            [itemFields]="['index','title','pageid','snippet']" 
+            [getdatafn]="getDataFN"
+            (statusEvent)="onStatus($event)"
+            (changeSelectedItem)="onChangeSelectedItem($event)">
+        </pzd-tredmill>
+    </main>
+    <aside class="sidebar sidebarLeft">
+        <h2>Swipe, pull, scroll</h2>
+        <p class="pzdoutline" [class.pzdoutlinestart]="(statusObs | async).outline === true">{{ (statusObs | async).message }}</p>
+        <p> selected Item: {{ selItemObs  | async }}</p>
+    </aside>
+    <aside class="sidebar sidebarRight">
+        <p>Data are queried from Wikipedia. Serach term is: Croatia</p>
+        <p>First field is calculated just to have a orientation and other fields are Wikipedia data</p>
+        <p>Data page size is 20 and 10 shown items on screen</p>
+    </aside>
+</div>

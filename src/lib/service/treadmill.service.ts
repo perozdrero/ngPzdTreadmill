@@ -14,6 +14,7 @@ export class TreadmillService {
     startImpetus: () => void;
     updateStatus: (message: string) => void;
     attachImpetusListeners: () => void;
+    chageSelectedItem: (item: ITMitemInterface) => void;
     private pagesInBuffer: Array<number> =  [];
     itemsToUpdateFromDB: Array<{ind: number, fn: (item: ITMitemInterface) => void}> = [];
     // updateFlexFns: Array<(order: number) => void> = [];
@@ -100,6 +101,8 @@ export class TreadmillService {
                 this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(item);
             } else {
                 console.log('##### buffer a ne bi trebao');
+                const emptItem  = {index: newDataIndex, data: {}, isEmpty: true};
+                this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(emptItem);
                 // lastFn = () =>
                 this.itemsToUpdateFromDB.push( { ind: newDataIndex,
                     fn: (item: ITMitemInterface) => this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(item) });
@@ -118,6 +121,8 @@ export class TreadmillService {
                 this.rowFns[0].rowItemUpdateFn(item);
             } else {
                 console.log('##### buffer a ne bi trebao');
+                const emptItem  = {index: newDataIndex, data: {}, isEmpty: true};
+                this.rowFns[0].rowItemUpdateFn(emptItem);
                 this.itemsToUpdateFromDB.push( { ind: newDataIndex,
                     fn: (item: ITMitemInterface) => this.rowFns[0].rowItemUpdateFn(item) });
             }

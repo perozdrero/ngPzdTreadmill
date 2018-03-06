@@ -1,6 +1,6 @@
 import { TmVisiblePage, ITMitemInterface } from './service/treadmilldatapage';
 import { Component, Input, ChangeDetectionStrategy, ElementRef, NgZone,
-        HostBinding, Renderer2, transition, AfterViewInit , ViewChild, OnDestroy } from '@angular/core';
+        HostBinding, Renderer2, transition, AfterViewInit , ViewChild, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { TreadmillService } from './service/treadmill.service';
 import { Observable } from './rxjs';
 import { Impetus } from './service/impetus/impetus';
@@ -53,11 +53,13 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   @Input() count: number;
   @Input() orientation: 'horizontal' | 'vertical' = 'vertical';
   FlexObsArray: Array<Observable<string>> = [];
-  @HostBinding('style.position') style = 'absolute';
+  @HostBinding('style.position') style = 'relative';
   @HostBinding('style.display') display = 'block';
   @ViewChild('scrollDiv') scrollElement: ElementRef;
   visiblePage: Observable<ITMitemInterface[]> | undefined;
-  statusObs =  Observable.of('');
+  @Output() statusEvent: EventEmitter<string> =   new EventEmitter();
+  @Output() changeSelectedItem: EventEmitter<ITMitemInterface> =   new EventEmitter();
+
   private impetus: Impetus;
   private scrollDiv: HTMLElement;
   // private startingImpetusValue = constImpetusResetpos;
@@ -123,6 +125,9 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       this.treadmillService.visiblePageSize = this.visiblePageSize;
       this.treadmillService.dataPageSize = this.dataPageSize;
       this.treadmillService.getdatafn = this.getdatafn;
+      this.treadmillService.chageSelectedItem = (item: ITMitemInterface) => {
+        this.changeSelectedItem.emit(item);
+      };
       this.treadmillService.sendFirstPage = (p: TmVisiblePage) => {
         this.firstPageObs = Observable.of(p);
       };
@@ -132,7 +137,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       this.treadmillService.startImpetus = () => this.createImpetus();
       this.treadmillService.attachImpetusListeners = () => this.attachImpetusListeners();
       this.treadmillService.updateStatus = (mess: string) => {
-        this.statusObs = Observable.of(mess);
+        this.statusEvent.emit(mess);
       };
       this.treadmillService.initTreadmill();
       this.initialised = true;

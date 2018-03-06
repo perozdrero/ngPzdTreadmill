@@ -3,6 +3,7 @@ import { TreadmillService } from './treadmill.service';
 export interface ITMitemInterface {
     index: number;
     data: any;
+    isEmpty: boolean;
 }
 
 export class TmPageOrder {

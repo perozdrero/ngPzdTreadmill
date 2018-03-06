@@ -3,7 +3,7 @@ import { ITMitemInterface } from './../service/treadmilldatapage';
 import {
     Component, ViewEncapsulation,
     ChangeDetectionStrategy,  OnInit,
-    ElementRef, HostBinding, Input, ChangeDetectorRef
+    ElementRef, HostBinding, Input, ChangeDetectorRef, HostListener
 } from '@angular/core';
 import { BehaviorSubject, Subject, Observable, Subscription } from './../rxjs';
 import { TreadmillService } from '../service/treadmill.service';
@@ -24,6 +24,7 @@ export class TmRowComponent implements OnInit {
     private isLast = false;
     private itemIndex = 0;
     private _cellUpdateFns: Array<(item: any) => void> = [];
+    private item: ITMitemInterface;
 
     constructor (private treadmillService: TreadmillService, thisEl: ElementRef, private cdr: ChangeDetectorRef) {
         this.thisHTMLElement = thisEl.nativeElement;
@@ -48,10 +49,11 @@ export class TmRowComponent implements OnInit {
         };
     }
     updateitem(newItem: ITMitemInterface) {
+        this.item = newItem;
         this.thisHTMLElement.style.order = '' + newItem.data.index;
         if (this._cellUpdateFns.length === 0) { throw ( new Error('Field count must be set')); }
         this.itemIndex = newItem.index;
-        this._cellUpdateFns.forEach( cfn => cfn(newItem));
+        if (newItem.isEmpty !== true) { this._cellUpdateFns.forEach( cfn => cfn(newItem)); }
         this.treadmillService.attachImpetusListeners();
         // Debug assert
         // if (this.thisHTMLElement.style.order !== newItem.data.index) {
@@ -62,6 +64,9 @@ export class TmRowComponent implements OnInit {
         this.isLast = isLast;
         this.cellLen = cells.length - 1;
         this.cellsObs = Observable.of(cells);
+    }
+    @HostListener('click')  click() {
+        this.treadmillService.chageSelectedItem(this.item);
     }
     private getHeight(): number {
         return this.thisHTMLElement.offsetHeight;
