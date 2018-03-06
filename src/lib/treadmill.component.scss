@@ -3,7 +3,9 @@
     position: absolute;
     top: 0px;
     left: 0px;
-    height: 100%;
+    right: 0px;
+    bottom: 0px;
+
     user-drag: none; 
     user-select: none;
     -moz-user-select: none;
@@ -14,16 +16,9 @@
     flex-flow: column;
     will-change: transform; 
     cursor: pointer;
-    .pzddispnone {
-        position: absolute;
-        right: 0;
-        height: 100%;
-        width: 5px;
-        overflow-y: scroll;
-        border: red solid 1px;
-        .pzdinnerscrolldiv {
-            height: calc(100% + 100000px);
-        }
+    pzd-tmrow {
+        flex: 1 1 100%;
+        display: block;
     }
 }
 .statuspzd {

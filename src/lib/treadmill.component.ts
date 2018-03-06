@@ -7,7 +7,34 @@ import { Impetus } from './service/impetus/impetus';
 
 const constImpetusRange = Number.MAX_SAFE_INTEGER - 1;
 const constImpetusResetpos = constImpetusRange / 2;
+let getPassiveSupported = () => {
+    let passiveSupported = false;
+    try {
+        const options = Object.defineProperty({}, 'passive', {
+            get: function() {
+                passiveSupported = true;
+            }
+        });
+        window.addEventListener('test', null, options);
+    } catch (eer) { console.log('No passive support'); }
+    getPassiveSupported = () => passiveSupported;
+  return passiveSupported;
+  };
 
+/*Type script bugfix */
+ interface WhatWGEventListenerArgs {
+    capture?: boolean;
+  }
+  interface WhatWGAddEventListenerArgs extends WhatWGEventListenerArgs {
+    passive?: boolean;
+    once?: boolean;
+  }
+  type WhatWGAddEventListener = (
+    type: string,
+    listener: (event: Event) => void,
+    options?: WhatWGAddEventListenerArgs
+  ) => void;
+/*Type script bugfix */
 
 @Component({
   moduleId: module.id,
@@ -37,11 +64,16 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   private dataIndexTopPos = 0;
   private initialised = false;
   private impetusWholeRowsDelta = 0;
+  private lastImpetusValue = 0;
+
   private rowHeight = 0;
   private listenersAttached = false;
-  private lastInRowDelta = 0;
-  private lastDelta = 0;
+  // private lastInRowTranslate = 0;
+  // private lastDelta = 0;
   private hammerElemnt: HammerManager;
+  private isWheelStarted = false;
+  private customWheelEvent = {type: 'wheel', clientX: 0, clientY: 0, preventDefault: () => undefined };
+
   constructor( private treadmillService: TreadmillService, // private thisElemnet: ElementRef,
                   private zone: NgZone, private renderer: Renderer2) {
   }
@@ -50,18 +82,42 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   }
   ngOnDestroy() {
     this.hammerElemnt.off('panstart', (ev: any) => this.impetus.onDown(ev));
+    (this.scrollDiv.removeEventListener as WhatWGAddEventListener)('wheel', (evn: WheelEvent) => this.onwheel(evn));
   }
   onwheel(event: WheelEvent) {
-        // TO-DO
+    this.customWheelEvent.preventDefault = () => event.preventDefault();
+    let fnID: number;
+    if (this.isWheelStarted === false) {
+        this.impetus.onDown(this.customWheelEvent);
+        this.isWheelStarted = true;
+        this.customWheelEvent.clientY += event.deltaY;
+        this.impetus.onMove(this.customWheelEvent);
+    } else {
+      this.customWheelEvent.clientY += event.deltaY;
+      window.clearTimeout(fnID);
+      fnID = window.setTimeout(() => {
+        if (this.isWheelStarted === true) {
+        this.endOnWheel();
+        }
+      }, 250);
+      this.impetus.onMove(this.customWheelEvent);
+    }
+  }
+  private endOnWheel() {
+    this.impetus.onUp(this.customWheelEvent);
+    this.isWheelStarted = false;
+    console.log('On wheel end');
   }
   private initailizeComponent() {
       if (!this.visiblePageSize) {
         throw ( new Error('Visible page size must be set'));
       }
+      const opts = getPassiveSupported() === true ? { passive: false } : { passive: true };
       this.scrollDiv = this.scrollElement.nativeElement;
       this.hammerElemnt = new Hammer(this.scrollDiv);
       this.hammerElemnt.get('pan').set({ direction: Hammer.DIRECTION_VERTICAL, threshold: 0 });
       this.hammerElemnt.on('panstart', (ev: any) => this.impetus.onDown(ev));
+      (this.scrollDiv.addEventListener as WhatWGAddEventListener)('wheel', (evn: WheelEvent) => this.onwheel(evn), opts );
       this.treadmillService.itemFields = this.itemFields;
       this.treadmillService.count = this.count;
       this.treadmillService.visiblePageSize = this.visiblePageSize;
@@ -82,35 +138,40 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       this.initialised = true;
   }
   impetusOnMove(impetusPos: number) {
-    const np =  (impetusPos - constImpetusResetpos - (this.impetusWholeRowsDelta || 0) + this.lastInRowDelta);
-    // if (Math.abs(np) / this.rowHeight < 0 ) {debugger;}
-    let delta = np  % this.rowHeight;
-    const nr = Math.floor( np / this.rowHeight);
-    if (nr !== 0) {
-      if ((this.dataIndexTopPos + nr) < 0) {return; }
-      const shufllePos = nr > 0 ? 0 : this.visiblePageSize - 1;
-      this.dataIndexTopPos += nr > 0 ? 1 : -1;
-      this.rowHeight = (nr > 0) ? this.treadmillService.rowFns[1].getHeightFn() :
+    const currTr = this.currentTranslate;
+    const newTrPos = currTr + (impetusPos - this.lastImpetusValue);
+    let delta = newTrPos  % this.rowHeight;
+    if ((newTrPos >=  this.rowHeight) || (newTrPos < 0)) {
+      const direction = newTrPos >=  this.rowHeight ? 1 : -1;
+      // console.log('impetus on move', direction);
+      if ((this.dataIndexTopPos + direction) < 0) {return; }
+      const shufllePos = direction > 0 ? 0 : this.visiblePageSize - 1;
+      this.dataIndexTopPos += direction;
+      this.impetusWholeRowsDelta +=  (direction > 0) ? this.rowHeight : (-1 * this.rowHeight);
+      this.rowHeight = (direction > 0) ? this.treadmillService.rowFns[1].getHeightFn() :
             this.treadmillService.getRowHeightForReverseOrder();
-      this.impetusWholeRowsDelta +=  (nr > 0) ? this.rowHeight : (-1 * this.rowHeight);
-      if (nr < 0) {
+      if (direction < 0) {
           delta = (this.rowHeight - Math.abs(delta)) % this.rowHeight;
       }
       this.removeImpetusListeners();
       this.setTranslate(delta);
       this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
-      this.lastDelta = delta;
-      // setTimeout(() => {
-        this.treadmillService.onScroll(this.dataIndexTopPos);
-      // }, 0);
+      this.treadmillService.onScroll(this.dataIndexTopPos);
     } else {
       this.setTranslate(delta);
     }
+    this.lastImpetusValue = impetusPos;
+  }
+  private get currentTranslate(): number {
+    const trns = this.scrollDiv.style.transform.replace('translateY(' , '').replace('px)', '');
+    // console.log('Translate ', Math.abs (+trns) );
+    return Math.abs (+trns);
   }
   private ResetImpetus() {
-    this.lastInRowDelta = this.lastDelta;
     this.impetusWholeRowsDelta = 0;
     this.impetus.setValues(0, constImpetusResetpos);
+    this.lastImpetusValue = constImpetusResetpos;
+    this.customWheelEvent.clientY = 0;
     this.rowHeight = this.treadmillService.rowFns[0].getHeightFn();
   }
   private attachImpetusListeners() {
@@ -140,7 +201,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   }
   private setTranslate(n: number) {
     this.zone.runOutsideAngular( () => {
-      this.scrollDiv.style.transform = (n || 0) !== 0 ? 'translateY(-' + ('' + n) + 'px)' : '';
+      this.scrollDiv.style.transform = (n || 0) !== 0 ? 'translateY(-' + ('' + Math.abs(n)) + 'px)' : '';
     });
   }
 }

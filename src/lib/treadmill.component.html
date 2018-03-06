@@ -3,8 +3,7 @@
         <!-- <pzd-tmrow  
             *ngFor="let item of (firstPageObs | async).items; let ind=index;"
             [style.order]="FlexObsArray[ind] | async"></pzd-tmrow> -->
-            <pzd-tmrow  
-            *ngFor="let item of (firstPageObs | async).items; let ind=index;"></pzd-tmrow>
+            <pzd-tmrow  *ngFor="let item of (firstPageObs | async).items; let ind=index;"></pzd-tmrow>
     </ng-container>
 </div>
 

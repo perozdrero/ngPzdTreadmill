@@ -198,9 +198,18 @@ export class Impetus {
      * @returns {Object} with x, y, and id properties
      */
     private normalizeEvent(ev: any): {x: number, y: number, id: number} {
+        if (ev.type === 'wheel') {
+            // console.log('Wheel',  ev.clientY );
+            return {
+                x:  0,
+                y:  ev.clientY,
+                id: null
+            };
+        }
+        // console.log('Hammerjs ' , - ev.changedPointers[0].clientY);
         return {
-            x:  ev.changedPointers[0].clientX,
-            y: - ev.changedPointers[0].clientY, // ev.pointers[ev.pointers.length - 1].clientY, // - this.getImpetusDelta(),
+            x:  0,
+            y: - ev.changedPointers[0].clientY,
             id: null
         };
     }
@@ -229,7 +238,7 @@ export class Impetus {
      * Handles move events
      * @param  {Object} ev Normalized event
      */
-    onMove(ev: Event) {
+    onMove(ev: any) {
         // console.log('Onmove ', ev);
         ev.preventDefault();
         const event = this.normalizeEvent(ev);
