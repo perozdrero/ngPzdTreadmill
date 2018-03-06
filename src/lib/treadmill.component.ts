@@ -74,6 +74,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
         this.firstPageObs = Observable.of(p);
       };
       this.treadmillService.startImpetus = () => this.createImpetus();
+      this.treadmillService.attachImpetusListeners = () => this.attachImpetusListeners();
       this.treadmillService.updateStatus = (mess: string) => {
         this.statusObs = Observable.of(mess);
       };
@@ -87,23 +88,24 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
     const nr = Math.floor( np / this.rowHeight);
     if (nr !== 0) {
       if ((this.dataIndexTopPos + nr) < 0) {return; }
-      this.impetusWholeRowsDelta += nr > 0 ? + this.rowHeight : - this.rowHeight;
+      this.removeImpetusListeners();
       const shufllePos = nr > 0 ? 0 : this.visiblePageSize - 1;
       this.dataIndexTopPos += nr > 0 ? 1 : -1;
-      this.removeImpetusListeners();
       if (nr > 0) {
         this.rowHeight = this.treadmillService.rowFns[1].getHeightFn();
+        this.impetusWholeRowsDelta += this.rowHeight;
         this.setTranslate(delta);
         this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
         this.lastDelta = delta;
       } else {
         this.rowHeight = this.treadmillService.getRowHeightForReverseOrder();
+        this.impetusWholeRowsDelta -= this.rowHeight;
+        // this.setTranslate(this.rowHeight);
         const newDelta = (this.rowHeight - Math.abs(delta)) % this.rowHeight;
-        this.setTranslate(newDelta);
         this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
+        this.setTranslate(newDelta);
         this.lastDelta = newDelta;
       }
-      this.attachImpetusListeners();
       this.treadmillService.onScroll(this.dataIndexTopPos);
     } else {
       this.setTranslate(delta);

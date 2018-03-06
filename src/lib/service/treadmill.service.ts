@@ -13,6 +13,7 @@ export class TreadmillService {
     sendFirstPage: (P: TmVisiblePage) => void;
     startImpetus: () => void;
     updateStatus: (message: string) => void;
+    attachImpetusListeners: () => void;
     private pagesInBuffer: Array<number> =  [];
     itemsToUpdateFromDB: Array<{ind: number, fn: (item: ITMitemInterface) => void}> = [];
     // updateFlexFns: Array<(order: number) => void> = [];
@@ -121,7 +122,7 @@ export class TreadmillService {
                     fn: (item: ITMitemInterface) => this.rowFns[0].rowItemUpdateFn(item) });
             }
         }
-
+        this.attachImpetusListeners();
         // let i = 0;
         // this.rowFns.forEach( fn => {
         //     console.log('ind ' + i + ' dataindex ' + this.rowFns[i].getIndex() );
