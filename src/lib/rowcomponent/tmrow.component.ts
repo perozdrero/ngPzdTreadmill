@@ -52,6 +52,7 @@ export class TmRowComponent implements OnInit {
         if (this._cellUpdateFns.length === 0) { throw ( new Error('Field count must be set')); }
         this.itemIndex = newItem.index;
         this._cellUpdateFns.forEach( cfn => cfn(newItem));
+        this.treadmillService.attachImpetusListeners();
         // Debug assert
         // if (this.thisHTMLElement.style.order !== newItem.data.index) {
         //     debugger;

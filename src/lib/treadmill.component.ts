@@ -84,29 +84,25 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   impetusOnMove(impetusPos: number) {
     const np =  (impetusPos - constImpetusResetpos - (this.impetusWholeRowsDelta || 0) + this.lastInRowDelta);
     // if (Math.abs(np) / this.rowHeight < 0 ) {debugger;}
-    const delta = np  % this.rowHeight;
+    let delta = np  % this.rowHeight;
     const nr = Math.floor( np / this.rowHeight);
     if (nr !== 0) {
       if ((this.dataIndexTopPos + nr) < 0) {return; }
-      this.removeImpetusListeners();
       const shufllePos = nr > 0 ? 0 : this.visiblePageSize - 1;
       this.dataIndexTopPos += nr > 0 ? 1 : -1;
-      if (nr > 0) {
-        this.rowHeight = this.treadmillService.rowFns[1].getHeightFn();
-        this.impetusWholeRowsDelta += this.rowHeight;
-        this.setTranslate(delta);
-        this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
-        this.lastDelta = delta;
-      } else {
-        this.rowHeight = this.treadmillService.getRowHeightForReverseOrder();
-        this.impetusWholeRowsDelta -= this.rowHeight;
-        // this.setTranslate(this.rowHeight);
-        const newDelta = (this.rowHeight - Math.abs(delta)) % this.rowHeight;
-        this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
-        this.setTranslate(newDelta);
-        this.lastDelta = newDelta;
+      this.rowHeight = (nr > 0) ? this.treadmillService.rowFns[1].getHeightFn() :
+            this.treadmillService.getRowHeightForReverseOrder();
+      this.impetusWholeRowsDelta +=  (nr > 0) ? this.rowHeight : (-1 * this.rowHeight);
+      if (nr < 0) {
+          delta = (this.rowHeight - Math.abs(delta)) % this.rowHeight;
       }
-      this.treadmillService.onScroll(this.dataIndexTopPos);
+      this.removeImpetusListeners();
+      this.setTranslate(delta);
+      this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
+      this.lastDelta = delta;
+      setTimeout(() => {
+        this.treadmillService.onScroll(this.dataIndexTopPos);
+      }, 0);
     } else {
       this.setTranslate(delta);
     }
