@@ -28,10 +28,12 @@ import { testDataFallBack } from './testdata';
     }
     .pzd {
       z-index: 50;
-      margin-left:25%;
-      margin-right:25%;
+      margin-left:30%;
+      margin-right:30%;
       height:60%;
-      width:50%;
+      width:40%;
+      max-width:40%;
+      min-width:40%;
       overflow:hidden;
     }
 
