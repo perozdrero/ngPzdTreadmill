@@ -19,7 +19,7 @@ const constImpetusResetpos = constImpetusRange / 2;
 })
 export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   firstPageObs: Observable<TmVisiblePage>;
-  @Input() getdatafn: ( pageSize: number, pageNum: number)  => Observable<object>;
+  @Input() getdatafn: ( pageSize: number, pageNum: number)  => Promise<any>;
   @Input() visiblePageSize: number;
   @Input() dataPageSize: number;
   @Input() itemFields: string[];
@@ -30,6 +30,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   @HostBinding('style.display') display = 'block';
   @ViewChild('scrollDiv') scrollElement: ElementRef;
   visiblePage: Observable<ITMitemInterface[]> | undefined;
+  statusObs =  Observable.of('');
   private impetus: Impetus;
   private scrollDiv: HTMLElement;
   // private startingImpetusValue = constImpetusResetpos;
@@ -73,6 +74,9 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
         this.firstPageObs = Observable.of(p);
       };
       this.treadmillService.startImpetus = () => this.createImpetus();
+      this.treadmillService.updateStatus = (mess: string) => {
+        this.statusObs = Observable.of(mess);
+      };
       this.treadmillService.initTreadmill();
       this.initialised = true;
   }
@@ -89,9 +93,10 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       this.dataIndexTopPos += nr > 0 ? 1 : -1;
       this.removeImpetusListeners();
       if (nr > 0) {
-        this.rowHeight = this.treadmillService.rowGetItemHeightFns[1]();
+        this.rowHeight = this.treadmillService.rowFns[1].getHeightFn();
         this.setTranslate(delta);
       } else {
+        this.rowHeight = this.treadmillService.getRowHeightForReverseOrder();
         const newDelta = (this.rowHeight + delta);
         this.setTranslate(newDelta);
       }
@@ -106,7 +111,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
     this.lastInRowDelta = this.lastDelta;
     this.impetusWholeRowsDelta = 0;
     this.impetus.setValues(0, constImpetusResetpos);
-    this.rowHeight = this.treadmillService.rowGetItemHeightFns[0]();
+    this.rowHeight = this.treadmillService.rowFns[0].getHeightFn();
   }
   private attachImpetusListeners() {
     if (this.listenersAttached === false) {

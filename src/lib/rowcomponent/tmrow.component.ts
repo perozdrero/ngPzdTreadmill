@@ -53,9 +53,9 @@ export class TmRowComponent implements OnInit {
         this.itemIndex = newItem.index;
         this._cellUpdateFns.forEach( cfn => cfn(newItem));
         // Debug assert
-        if (this.thisHTMLElement.style.order !== newItem.data.index) {
-            debugger;
-        }
+        // if (this.thisHTMLElement.style.order !== newItem.data.index) {
+        //     debugger;
+        // }
     }
     createCells(isLast: boolean, cells: string[]) {
         this.isLast = isLast;

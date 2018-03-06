@@ -7,3 +7,5 @@
             *ngFor="let item of (firstPageObs | async).items; let ind=index;"></pzd-tmrow>
     </ng-container>
 </div>
+
+<div class="statuspzd">{{ statusObs | async }}</div>

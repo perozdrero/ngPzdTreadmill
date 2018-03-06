@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable()
 export class TreadmillService {
-    getdatafn: ( pageSize: number, pageNum: number)  => Observable<object>;
+    getdatafn: ( pageSize: number, pageNum: number)  => Promise<any>;
     dataPages: TmDataPage[] = [];
     itemFields: string[];
     visiblePageSize: number;
@@ -12,11 +12,17 @@ export class TreadmillService {
     count: number;
     sendFirstPage: (P: TmVisiblePage) => void;
     startImpetus: () => void;
+    updateStatus: (message: string) => void;
     itemsToUpdateFromDB: Array<{ind: number, fn: (item: ITMitemInterface) => void}> = [];
     // updateFlexFns: Array<(order: number) => void> = [];
-    itemsGetItemIndex: Array<() => number> = [];
-    rowItemsUpdateFns: Array<(item: ITMitemInterface) => void> = [];
-    rowGetItemHeightFns: Array<() => number> = [];
+    rowFns: Array< {
+        updateFn: (item: ITMitemInterface) => void,
+        getHeightFn: () => number,
+        sendCellsFN: (islast: boolean, fields: string[]) => void,
+        getIndex: () => number,
+        rowItemUpdateFn: (item: ITMitemInterface) => void
+        }> = [];
+
     private _visiblePage: TmVisiblePage;
     private _currTmindex = 0;
     private topPos = 0;
@@ -32,15 +38,12 @@ export class TreadmillService {
     }) {
         // console.log('punim buffer', this._currTmindex, this.itemFields);
         this.itemsToUpdateFromDB.push({ind: this._currTmindex, fn: o.updateFn});
-        this.rowGetItemHeightFns.push(o.getHeightFn);
-        this.itemsGetItemIndex.push(o.getIndex);
-        this.rowItemsUpdateFns.push(o.rowItemUpdateFn);
+        this.rowFns.push(o);
         o.sendCellsFN(this._currTmindex === (this.visiblePageSize - 1), this.itemFields);
         this._currTmindex ++;
     }
     fillFirstPage() {
         setTimeout(() => {
-            console.log('### Get first page database');
             this.startImpetus();
             this.getDataPage(0);
         }, 20);
@@ -70,53 +73,59 @@ export class TreadmillService {
     //     return this.rowGetItemHeightFns[1]();
     // }
     getDataPage(pageNo) {
-        this.getdatafn(this.dataPageSize, pageNo).subscribe(r => {
-            console.log(r);
+        this.getdatafn(this.dataPageSize, pageNo).then(r => {
             const pind = this.pagesOrderFixedGrid.findIndex(pno => pno === pageNo);
-            console.log('get page');
             this.dataPages[pind].fillPage((<any>r).data, pageNo);
         });
     }
     shuffleRow(ind: number, newTopInd: number) {
-        // console.log('inde ' + ind + ' ,Novi flex ' + flexOrder);
 
         if (ind === 0) {
             const iteminfo = {index: 0, height: 0};
-            // row height Fns
-            const rowFn = this.rowGetItemHeightFns.shift();
-            iteminfo.height = rowFn();
-            this.rowGetItemHeightFns.push(rowFn);
-            // set index FN
-            const indexFn = this.itemsGetItemIndex.shift();
-            this.itemsGetItemIndex.push(indexFn);
-            iteminfo.index = indexFn();
+            // shuffle object
+            const passedObjectFn = this.rowFns.shift();
+            iteminfo.height = passedObjectFn.getHeightFn();
+            iteminfo.index = passedObjectFn.getIndex();
             this.passedItems.push(iteminfo);
-            // set item FN
-            const updateItemFN = this.rowItemsUpdateFns.shift();
-            this.rowItemsUpdateFns.push(updateItemFN);
+            this.rowFns.push(passedObjectFn);
             // update visible page with new data
-            const newDataIndex = indexFn() + this.visiblePageSize;
+            const newDataIndex = iteminfo.index + this.visiblePageSize;
             const newPageno = Math.floor(newDataIndex / this.dataPageSize);
             const pi = this.pagesOrderFixedGrid.findIndex(o => o === newPageno);
             if ((pi !== -1) && (this.dataPages[pi].hasData === true)) {
                 const inPageIndex = newDataIndex % this.dataPageSize;
                 const item = this.dataPages[pi].items[inPageIndex];
-                this.rowItemsUpdateFns[this.visiblePageSize - 1](item);
+                this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(item);
             } else {
                 console.log('##### buffer a ne bi trebao');
                 // lastFn = () =>
                 this.itemsToUpdateFromDB.push( { ind: newDataIndex,
-                    fn: (item: ITMitemInterface) => this.rowItemsUpdateFns[this.visiblePageSize - 1](item) });
+                    fn: (item: ITMitemInterface) => this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(item) });
             }
         } else {
-            // row height Fns
-            const rowFn = this.rowGetItemHeightFns.pop();
-            this.rowGetItemHeightFns.unshift(rowFn);
-            // set flex positions fns
-            // const flexFn = this.updateFlexFns.pop();
-            // this.updateFlexFns.unshift(flexFn);
+            // shuffle object
+            const passedObjectFn = this.rowFns.pop();
+            this.rowFns.unshift(passedObjectFn);
+
+            const newDataIndex = passedObjectFn.getIndex() - this.visiblePageSize;
+            const newPageno = Math.floor(newDataIndex / this.dataPageSize);
+            const pi = this.pagesOrderFixedGrid.findIndex(o => o === newPageno);
+            if ((pi !== -1) && (this.dataPages[pi].hasData === true)) {
+                const inPageIndex = newDataIndex % this.dataPageSize;
+                const item = this.dataPages[pi].items[inPageIndex];
+                this.rowFns[0].rowItemUpdateFn(item);
+            } else {
+                console.log('##### buffer a ne bi trebao');
+                this.itemsToUpdateFromDB.push( { ind: newDataIndex,
+                    fn: (item: ITMitemInterface) => this.rowFns[0].rowItemUpdateFn(item) });
+            }
         }
 
+        // let i = 0;
+        // this.rowFns.forEach( fn => {
+        //     console.log('ind ' + i + ' dataindex ' + this.rowFns[i].getIndex() );
+        //     i++;
+        // });
     }
     onScroll(newTopPos: number) {
         let pagesToHave: number[];
@@ -133,13 +142,12 @@ export class TreadmillService {
             }
         }
         if (pagesToHave[0] < 0) {pagesToHave = [0, 1, 2]; }
-        // debug order refresh
-        // console.log('###$#$#$####### pagesToHave ' + pagesToHave);
-        // console.log('###$#$#$####### imam' + this.pagesOrderFixedGrid);
         this.checkPagesAndLoad(pagesToHave);
-        // console.log('###$#$#$####### poslije ' + this.pagesOrderFixedGrid);
-        // console.log('###$#$#$####### !!! orderToBe before setY  ' + JSON.stringify( this.orderToBe)) ;
         this.topPos = newTopPos;
+    }
+    getRowHeightForReverseOrder() {
+        const lastItem = this.passedItems.pop();
+        return lastItem.height;
     }
     /**
      * funckcija koja pregleda koje pageve imam u memoriji izbaci onu koju ne trebama
@@ -210,10 +218,11 @@ export class TreadmillService {
         });
     }
     private getDataPageFromOrder(ordItem: {dataPageNo: number, pageArrayIndex: any}) {
-        this.getdatafn(this.dataPageSize, ordItem.dataPageNo).subscribe(r => {
-            console.log('get page from Order ' + ordItem.dataPageNo);
+        this.getdatafn(this.dataPageSize, ordItem.dataPageNo).then(r => {
             this.dataPages[ordItem.pageArrayIndex].fillPage((<any>r).data, ordItem.dataPageNo);
             this.pagesOrderFixedGrid[ordItem.pageArrayIndex] = ordItem.dataPageNo;
+            const mess = `Pages in memmory: ${this.pagesOrderFixedGrid[0]}, ${this.pagesOrderFixedGrid[1]}, ${this.pagesOrderFixedGrid[2]}`;
+            this.updateStatus(mess);
         });
     }
 }
