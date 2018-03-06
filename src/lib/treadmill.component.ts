@@ -98,7 +98,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
         this.lastDelta = delta;
       } else {
         this.rowHeight = this.treadmillService.getRowHeightForReverseOrder();
-        const newDelta = (this.rowHeight + delta);
+        const newDelta = (this.rowHeight - Math.abs(delta)) % this.rowHeight;
         this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
         this.setTranslate(newDelta);
         this.lastDelta = newDelta;
