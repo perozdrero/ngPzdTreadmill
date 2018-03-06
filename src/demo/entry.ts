@@ -6,7 +6,7 @@ import { DemoModule } from './demo.module';
 
 // declare var ENV: string;
 // if (ENV === 'production') {
-//   enableProdMode();
+enableProdMode();
 // }
 
 platformBrowserDynamic().bootstrapModule(DemoModule);

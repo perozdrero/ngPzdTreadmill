@@ -13,6 +13,7 @@ export class TreadmillService {
     sendFirstPage: (P: TmVisiblePage) => void;
     startImpetus: () => void;
     updateStatus: (message: string) => void;
+    private pagesInBuffer: Array<number> =  [];
     itemsToUpdateFromDB: Array<{ind: number, fn: (item: ITMitemInterface) => void}> = [];
     // updateFlexFns: Array<(order: number) => void> = [];
     rowFns: Array< {
@@ -147,6 +148,7 @@ export class TreadmillService {
     }
     getRowHeightForReverseOrder() {
         const lastItem = this.passedItems.pop();
+        console.log('Rikverx '  + lastItem.height);
         return lastItem.height;
     }
     /**
@@ -213,14 +215,20 @@ export class TreadmillService {
         // console.log('###$#$#$####### !!! after pagesOrderFixedGrid ' + this.pagesOrderFixedGrid);
     }
     private getPages() {
+
         this.orderToBe.forEach(ordItem => {
-            this.getDataPageFromOrder(ordItem);
+            if (!this.pagesInBuffer.find(b => b === ordItem.dataPageNo)) {
+                this.pagesInBuffer.push(ordItem.dataPageNo);
+                this.getDataPageFromOrder(ordItem);
+            }
         });
     }
     private getDataPageFromOrder(ordItem: {dataPageNo: number, pageArrayIndex: any}) {
         this.getdatafn(this.dataPageSize, ordItem.dataPageNo).then(r => {
             this.dataPages[ordItem.pageArrayIndex].fillPage((<any>r).data, ordItem.dataPageNo);
             this.pagesOrderFixedGrid[ordItem.pageArrayIndex] = ordItem.dataPageNo;
+            const delInd = this.pagesInBuffer.findIndex( b => b === ordItem.dataPageNo);
+            this.pagesInBuffer.splice(delInd , 1);
             const mess = `Pages in memmory: ${this.pagesOrderFixedGrid[0]}, ${this.pagesOrderFixedGrid[1]}, ${this.pagesOrderFixedGrid[2]}`;
             this.updateStatus(mess);
         });
