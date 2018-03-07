@@ -16,14 +16,14 @@ export class TreadmillService {
     attachImpetusListeners: () => void;
     chageSelectedItem: (item: ITMitemInterface) => void;
     private pagesInBuffer: Array<number> =  [];
-    itemsToUpdateFromDB: Array<{ind: number, fn: (item: ITMitemInterface) => void}> = [];
+    itemsToUpdateFromDB: Array<{rowID: number, ind: number, fn: (item: ITMitemInterface) => void}> = [];
     // updateFlexFns: Array<(order: number) => void> = [];
     rowFns: Array< {
         updateFn: (item: ITMitemInterface) => void,
         getHeightFn: () => number,
         sendCellsFN: (islast: boolean, fields: string[]) => void,
         getIndex: () => number,
-        rowItemUpdateFn: (item: ITMitemInterface) => void
+        rowItemUpdateFn: (item: ITMitemInterface) => number
         }> = [];
 
     private _visiblePage: TmVisiblePage;
@@ -33,14 +33,14 @@ export class TreadmillService {
     private orderToBe: {dataPageNo: number, pageArrayIndex: any}[] = [];
     private passedItems: Array<{index: number, height: number}> = [];
     set rowUpdateRowFN( o: {
+        rowID: number,
         updateFn: (item: ITMitemInterface) => void,
         getHeightFn: () => number,
         sendCellsFN: (islast: boolean, fields: string[]) => void,
         getIndex: () => number,
-        rowItemUpdateFn: (item: ITMitemInterface) => void
+        rowItemUpdateFn: (item: ITMitemInterface) => number
     }) {
-        // console.log('punim buffer', this._currTmindex, this.itemFields);
-        this.itemsToUpdateFromDB.push({ind: this._currTmindex, fn: o.updateFn});
+        this.itemsToUpdateFromDB.push({rowID: o.rowID, ind: this._currTmindex, fn: o.updateFn});
         this.rowFns.push(o);
         o.sendCellsFN(this._currTmindex === (this.visiblePageSize - 1), this.itemFields);
         this._currTmindex ++;
@@ -67,66 +67,50 @@ export class TreadmillService {
         this._visiblePage = new TmVisiblePage(this.visiblePageSize);
         this.sendFirstPage(this._visiblePage);
         this.dataPages.length = 3;
-        this.pagesOrderFixedGrid = [0, 1, 2];
+        this.pagesOrderFixedGrid = [0, undefined, undefined];
         this.dataPages[0] = new TmDataPage(0, this.dataPageSize, () => this.getMissingItems(), 0); // , () => this.updateFlexFns);
         this.dataPages[1] = new TmDataPage(0, this.dataPageSize, () => this.getMissingItems(), 1); // , () => this.updateFlexFns);
         this.dataPages[2] = new TmDataPage(0, this.dataPageSize, () => this.getMissingItems(), 2); // , () => this.updateFlexFns);
     }
-    // getFirstRowHeight(): number {
-    //     return this.rowGetItemHeightFns[1]();
-    // }
     getDataPage(pageNo) {
         this.getdatafn(this.dataPageSize, pageNo).then(r => {
             const pind = this.pagesOrderFixedGrid.findIndex(pno => pno === pageNo);
             this.dataPages[pind].fillPage((<any>r).data, pageNo);
         });
     }
-    shuffleRow(ind: number, newTopInd: number) {
-
-        if (ind === 0) {
-            const iteminfo = {index: 0, height: 0};
-            // shuffle object
-            const passedObjectFn = this.rowFns.shift();
-            iteminfo.height = passedObjectFn.getHeightFn();
-            iteminfo.index = passedObjectFn.getIndex();
-            this.passedItems.push(iteminfo);
-            this.rowFns.push(passedObjectFn);
-            // update visible page with new data
-            const newDataIndex = iteminfo.index + this.visiblePageSize;
-            const newPageno = Math.floor(newDataIndex / this.dataPageSize);
-            const pi = this.pagesOrderFixedGrid.findIndex(o => o === newPageno);
-            if ((pi !== -1) && (this.dataPages[pi].hasData === true)) {
-                const inPageIndex = newDataIndex % this.dataPageSize;
-                const item = this.dataPages[pi].items[inPageIndex];
-                this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(item);
-            } else {
-                console.log('##### buffer a ne bi trebao');
-                const emptItem  = {index: newDataIndex, data: {}, isEmpty: true};
-                this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(emptItem);
-                // lastFn = () =>
-                this.itemsToUpdateFromDB.push( { ind: newDataIndex,
-                    fn: (item: ITMitemInterface) => this.rowFns[this.visiblePageSize - 1].rowItemUpdateFn(item) });
-            }
-        } else {
-            // shuffle object
-            const passedObjectFn = this.rowFns.pop();
-            this.rowFns.unshift(passedObjectFn);
-
-            const newDataIndex = passedObjectFn.getIndex() - this.visiblePageSize;
-            const newPageno = Math.floor(newDataIndex / this.dataPageSize);
-            const pi = this.pagesOrderFixedGrid.findIndex(o => o === newPageno);
-            if ((pi !== -1) && (this.dataPages[pi].hasData === true)) {
-                const inPageIndex = newDataIndex % this.dataPageSize;
-                const item = this.dataPages[pi].items[inPageIndex];
-                this.rowFns[0].rowItemUpdateFn(item);
-            } else {
-                console.log('##### buffer a ne bi trebao');
-                const emptItem  = {index: newDataIndex, data: {}, isEmpty: true};
-                this.rowFns[0].rowItemUpdateFn(emptItem);
-                this.itemsToUpdateFromDB.push( { ind: newDataIndex,
-                    fn: (item: ITMitemInterface) => this.rowFns[0].rowItemUpdateFn(item) });
-            }
-        }
+    shuffleRow(ind: number, newDataInd: number) {
+        // let newDataIndex = 0;
+        const shufleFn = (ind === 0) ? () => {
+                const iteminfo = {index: 0, height: 0};
+                const passedObjectFn = this.rowFns.shift();
+                iteminfo.height = passedObjectFn.getHeightFn();
+                iteminfo.index = passedObjectFn.getIndex();
+                this.passedItems.push(iteminfo);
+                this.rowFns.push(passedObjectFn);
+            } : () => {
+                const passedObjectFn = this.rowFns.pop();
+                this.rowFns.unshift(passedObjectFn);
+                // newDataIndex = newTopInd - 1 ; //passedObjectFn.getIndex() - this.visiblePageSize;
+            };
+         shufleFn();
+         const shuffleInd = (ind === 0) ? this.visiblePageSize - 1 : 0;
+         const newPageno = Math.floor(newDataInd / this.dataPageSize);
+         const pi = this.pagesOrderFixedGrid.findIndex(o => o === newPageno);
+         if ((pi !== -1) && (this.dataPages[pi].hasData === true)) {
+             const inPageIndex = newDataInd % this.dataPageSize;
+             const item = this.dataPages[pi].items[inPageIndex];
+             this.rowFns[shuffleInd].rowItemUpdateFn(item);
+         } else {
+             const emptItem  = {index: newDataInd, data: {}, isEmpty: true};
+             const rowID = this.rowFns[shuffleInd].rowItemUpdateFn(emptItem);
+             // if same row exist delete if - realy fast scrolling
+             const existsID = this.itemsToUpdateFromDB.findIndex(it => it.rowID === rowID);
+             if (existsID !== -1) { this.itemsToUpdateFromDB.splice(existsID , 1); }
+             const upFn = this.rowFns[shuffleInd].rowItemUpdateFn;
+             this.itemsToUpdateFromDB.push( { rowID: rowID, ind: newDataInd,
+                 fn: (item: ITMitemInterface) =>  upFn(item)});
+         }
+        // debug
         // let i = 0;
         // this.rowFns.forEach( fn => {
         //     console.log('ind ' + i + ' dataindex ' + this.rowFns[i].getIndex() );
@@ -148,6 +132,7 @@ export class TreadmillService {
             }
         }
         if (pagesToHave[0] < 0) {pagesToHave = [0, 1, 2]; }
+        if (pagesToHave[0] === 0) {pagesToHave = [0, 1, undefined]; }
         this.checkPagesAndLoad(pagesToHave);
         this.topPos = newTopPos;
     }
@@ -164,55 +149,61 @@ export class TreadmillService {
     private checkPagesAndLoad( pagesToHave: number[]) {
         const freeAiIndexes: number[] = [];
         const pagesToFetch: number[] = [];
-        const ip1 = this.pagesOrderFixedGrid.findIndex(ii => ii === pagesToHave[0]);
-        const ip2 = this.pagesOrderFixedGrid.findIndex(ii => ii === pagesToHave[1]);
-        const ip3 = this.pagesOrderFixedGrid.findIndex(ii => ii === pagesToHave[2]);
-        if ( ip1 === -1) {
+        const ip0 = this.pagesOrderFixedGrid.findIndex(ii => ii === pagesToHave[0]);
+        const ip1 = this.pagesOrderFixedGrid.findIndex(ii => ii === pagesToHave[1]);
+        const ip2 = this.pagesOrderFixedGrid.findIndex(ii => ii === pagesToHave[2]);
+        if ((ip0 !== -1) && (ip1 !== -1) && (ip2 !== -1)) { return; }
+        const inBp0 = this.pagesInBuffer.findIndex(inpb => inpb === pagesToHave[0]);
+        if (( ip0 === -1) && (inBp0 === -1)) {
             pagesToFetch.push(pagesToHave[0]);
-        } else {
-            if (this.dataPages[ip1].hasData === false) {
-                pagesToFetch.push(pagesToHave[0]);
-            }
         }
-        if (ip2 === -1) {
+        const inBp1 = this.pagesInBuffer.findIndex(inpb => inpb === pagesToHave[1]);
+        if ((ip1 === -1) && (inBp1 === -1)) {
             pagesToFetch.push(pagesToHave[1]);
-        } else {
-            if (this.dataPages[ip2].hasData === false) {
-                pagesToFetch.push(pagesToHave[1]);
-            }
         }
-        if (ip3 === -1) {
+        const inBp2 = this.pagesInBuffer.findIndex(inpb => inpb === pagesToHave[2]);
+        if ((ip2 === -1) && (inBp2 === -1)) {
             pagesToFetch.push(pagesToHave[2]);
-        } else {
-            if (this.dataPages[ip3].hasData === false) {
-                pagesToFetch.push(pagesToHave[2]);
-            }
         }
-
+        let frind1 = 0;
+        let frind2 = 0;
         const frind0 = pagesToHave.findIndex(ii => ii === this.pagesOrderFixedGrid[0]);
-        const frind1 = pagesToHave.findIndex(ii => ii === this.pagesOrderFixedGrid[1]);
-        const frind2 = pagesToHave.findIndex(ii => ii === this.pagesOrderFixedGrid[2]);
-
-        if (( frind0 === -1) || (this.dataPages[0].hasData === false))  {
+        if ((pagesToHave[1] !== undefined) && (this.pagesOrderFixedGrid[1] === undefined)) {
+            frind1 = -1;
+        } else {    frind1 = pagesToHave.findIndex(ii => ii === this.pagesOrderFixedGrid[1]);
+        }
+        if ((pagesToHave[2] !== undefined) && (this.pagesOrderFixedGrid[2] === undefined)) {
+            frind2 = -1;
+        } else {
+            frind2 = pagesToHave.findIndex(ii => ii === this.pagesOrderFixedGrid[2]);
+        }
+        if ( frind0 === -1)   {
            freeAiIndexes.push(0);
+           const delPos = this.pagesInBuffer.findIndex(pb => pb === this.pagesOrderFixedGrid[0]);
+           if (delPos !== -1) { this.pagesInBuffer.splice(delPos); }
         }
-        if (( frind1 === -1) || (this.dataPages[1].hasData === false))  {
+        if ( frind1 === -1)   {
             freeAiIndexes.push(1);
+            const delPos = this.pagesInBuffer.findIndex(pb => pb === this.pagesOrderFixedGrid[1]);
+            if (delPos !== -1) { this.pagesInBuffer.splice(delPos); }
         }
-        if (( frind2 === -1) || (this.dataPages[2].hasData === false))  {
+        if ( frind2 === -1)  {
             freeAiIndexes.push(2);
+            const delPos = this.pagesInBuffer.findIndex(pb => pb === this.pagesOrderFixedGrid[2]);
+            if (delPos !== -1) { this.pagesInBuffer.splice(delPos); }
         }
         let i = 0;
         this.orderToBe = [];
         freeAiIndexes.forEach(ind => {
-            if (this.dataPages[ind]) {
-                this.dataPages[ind].hasData = false;
-                this.dataPages[ind].pageNo = pagesToFetch[i];
+            if (pagesToFetch[i] !== undefined) {
+                if (this.dataPages[ind]) {
+                    this.dataPages[ind].hasData = false;
+                    this.dataPages[ind].pageNo = pagesToFetch[i];
+                }
+                this.dataPages[ind].pageArrayind = ind;
+                this.pagesOrderFixedGrid[ind] = pagesToFetch[i];
+                this.orderToBe.push({pageArrayIndex: ind, dataPageNo: pagesToFetch[i]});
             }
-            this.dataPages[ind].pageArrayind = ind;
-            this.pagesOrderFixedGrid[ind] = -1;
-            // this.pages[ind].getPageSurface(this.pages[ind], pagesToFetch[i]);
-            this.orderToBe.push({pageArrayIndex: ind, dataPageNo: pagesToFetch[i]});
             ++i;
         });
         this.getPages();
@@ -222,20 +213,25 @@ export class TreadmillService {
     private getPages() {
 
         this.orderToBe.forEach(ordItem => {
-            if (!this.pagesInBuffer.find(b => b === ordItem.dataPageNo)) {
-                this.pagesInBuffer.push(ordItem.dataPageNo);
-                this.getDataPageFromOrder(ordItem);
+            if ((ordItem !== undefined) && (ordItem.dataPageNo !== undefined)) {
+                if (!this.pagesInBuffer.find(b => b === ordItem.dataPageNo)) {
+                    this.pagesInBuffer.push(ordItem.dataPageNo);
+                    this.getDataPageFromOrder(ordItem);
+                }
             }
         });
     }
     private getDataPageFromOrder(ordItem: {dataPageNo: number, pageArrayIndex: any}) {
-        this.getdatafn(this.dataPageSize, ordItem.dataPageNo).then(r => {
-            this.dataPages[ordItem.pageArrayIndex].fillPage((<any>r).data, ordItem.dataPageNo);
-            this.pagesOrderFixedGrid[ordItem.pageArrayIndex] = ordItem.dataPageNo;
-            const delInd = this.pagesInBuffer.findIndex( b => b === ordItem.dataPageNo);
-            this.pagesInBuffer.splice(delInd , 1);
-            const mess = `Pages in memmory: ${this.pagesOrderFixedGrid[0]}, ${this.pagesOrderFixedGrid[1]}, ${this.pagesOrderFixedGrid[2]}`;
-            this.updateStatus(mess);
-        });
+            this.getdatafn(this.dataPageSize, ordItem.dataPageNo).then(r => {
+                const arrayIndToFill = this.pagesOrderFixedGrid.findIndex(pNo => pNo === ordItem.dataPageNo);
+                if (arrayIndToFill !== -1) {
+                    this.dataPages[arrayIndToFill].fillPage((<any>r).data, ordItem.dataPageNo);
+                    // this.pagesOrderFixedGrid[arrayIndToFill] = ordItem.dataPageNo;
+                    const delInd = this.pagesInBuffer.findIndex( b => b === ordItem.dataPageNo);
+                    this.pagesInBuffer.splice(delInd);
+    const mess = `Pages in memmory: ${this.pagesOrderFixedGrid[0]}, ${this.pagesOrderFixedGrid[1]}, ${this.pagesOrderFixedGrid[2]}`;
+                    this.updateStatus(mess);
+                }
+            });
     }
 }

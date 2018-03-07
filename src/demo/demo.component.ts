@@ -12,6 +12,7 @@ import { testDataFallBack } from './testdata';
 export class DemoComponent {
   statusObs = Observable.of({outline: false, message: ''});
   selItemObs =  Observable.of('');
+  private timeOut = 0;
   constructor( private httpClinet: HttpClient) {
 
   }
@@ -41,8 +42,9 @@ export class DemoComponent {
                 return ret;
             });
             const resp = {count: response.query.searchinfo.totalhits, data: items};
-
-            resolve (resp);
+            setTimeout(() => {
+              resolve (resp);
+            }, this.timeOut);
           }).catch( (err: any) => {
             let i = 0;
             const items = testDataFallBack.query.search.map((s) => {
@@ -52,7 +54,9 @@ export class DemoComponent {
               return ret;
             });
             const resp = {count: testDataFallBack.query.searchinfo.totalhits, data: items};
-            resolve(resp);
+            setTimeout(() => {
+              resolve(resp);
+            }, this.timeOut);
           });
       });
 
@@ -70,5 +74,8 @@ export class DemoComponent {
 
     return ( pageSize: number, pageNum: number) =>  this.dataFn(pageSize, pageNum, 'Croatia');
 
+  }
+  isSlowNetwork(value: any) {
+    this.timeOut =  (value.checked === true) ? 2000 : 0;
   }
 }

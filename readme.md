@@ -1,7 +1,6 @@
 
-## Demo
+# Demo 
 https://perozdrero.github.io/ngPzdTreadmill/demo/
-
 
 ## About
 

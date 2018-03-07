@@ -1,5 +1,12 @@
 
-<div draggable="false" class="pzdtmrow card card-1" *ngIf="cellsObs">   
-        <pzd-tmcell draggable="false" *ngFor="let item of (cellsObs | async);" [Field]="item" [UpdateFN]="addCellFn()"  ></pzd-tmcell> 
+<div draggable="false" class="pzdtmrow card card-1" 
+                      [class.pzdrowhasdata]="(emptyObs | async)  === false"  
+                       *ngIf="cellsObs">
+        <pzd-tmcell        
+                [class.pzdhidden]="(emptyObs | async)  === true"
+                draggable="false" 
+                *ngFor="let item of (cellsObs | async);" 
+                [Field]="item" 
+                [UpdateFN]="addCellFn()"  ></pzd-tmcell> 
 </div>
  

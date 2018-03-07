@@ -11,5 +11,17 @@
     -ms-user-select: none;
     // border: solid 1px gray;
     flex: 1 1 auto;
-    //   }
+    background-color: gray;
 }
+.pzdrowhasdata {
+    visibility: visible;
+    transition-property: background-color;
+    transition-duration: 0.5s;
+    transition-timing-function: linear;
+    background-color: white;
+
+}
+.pzdhidden
+{
+    visibility: hidden;
+} 

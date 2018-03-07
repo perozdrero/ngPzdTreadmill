@@ -108,7 +108,6 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
   private endOnWheel() {
     this.impetus.onUp(this.customWheelEvent);
     this.isWheelStarted = false;
-    console.log('On wheel end');
   }
   private initailizeComponent() {
       if (!this.visiblePageSize) {
@@ -149,7 +148,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
     if ((newTrPos >=  this.rowHeight) || (newTrPos < 0)) {
       const direction = newTrPos >=  this.rowHeight ? 1 : -1;
       // console.log('impetus on move', direction);
-      if ((this.dataIndexTopPos + direction) < 0) {return; }
+      if ((this.dataIndexTopPos + direction) < 1) {return; }
       const shufllePos = direction > 0 ? 0 : this.visiblePageSize - 1;
       this.dataIndexTopPos += direction;
       this.impetusWholeRowsDelta +=  (direction > 0) ? this.rowHeight : (-1 * this.rowHeight);
@@ -160,7 +159,7 @@ export class TreadmillComponent implements  AfterViewInit, OnDestroy {
       }
       this.removeImpetusListeners();
       this.setTranslate(delta);
-      this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos);
+      this.treadmillService.shuffleRow(shufllePos, this.dataIndexTopPos + (direction > 0 ? (this.visiblePageSize - 1) : -1 ));
       this.treadmillService.onScroll(this.dataIndexTopPos);
     } else {
       this.setTranslate(delta);

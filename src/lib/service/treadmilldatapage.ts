@@ -62,21 +62,16 @@ export class TmDataPage {
             currItem.index = this.startingInd + i;
             currItem.isEmpty = false;
             currItem.data = item;
-            if  (this.getMissingItems().length > 0) {
-                const updateFNind = this.getMissingItems().findIndex(it => it.ind === currItem.index);
+            const missingItem = this.getMissingItems();
+            if  (missingItem.length > 0) {
+                const updateFNind = missingItem.findIndex(it => it.ind === currItem.index);
                 if (updateFNind !== -1) {
-                    const updObj = this.getMissingItems().splice(updateFNind, 1);
-                    // this.getFlexUpdateFN()[i](updObj[0].ind);
-                    // setTimeout that style.order be readable and assert if needed
-                    // setTimeout(() => {
-                        updObj[0].fn(currItem);
-                    // }, 0);
+                    const updObj = missingItem.splice(updateFNind, 1);
+                    updObj[0].fn(currItem);
                 }
             }
             i++;
         }
-        return i;
-
     }
 
 }

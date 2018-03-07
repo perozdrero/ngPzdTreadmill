@@ -3,7 +3,7 @@ import { ITMitemInterface } from './../service/treadmilldatapage';
 import {
     Component, ViewEncapsulation,
     ChangeDetectionStrategy,  OnInit,
-    ElementRef, HostBinding, Input, ChangeDetectorRef, HostListener
+    ElementRef, HostBinding, Input, ChangeDetectorRef, HostListener, NgZone
 } from '@angular/core';
 import { BehaviorSubject, Subject, Observable, Subscription } from './../rxjs';
 import { TreadmillService } from '../service/treadmill.service';
@@ -18,7 +18,10 @@ import { TreadmillService } from '../service/treadmill.service';
 })
 export class TmRowComponent implements OnInit {
     @HostBinding('style.flex') flex = '1 1 auto';
+    @Input() rowID: number;
     cellsObs: Observable<string[]>;
+    emptyObsSubj: BehaviorSubject<boolean> = new BehaviorSubject(undefined);
+    emptyObs: Observable<boolean> = this.emptyObsSubj.asObservable();
     thisHTMLElement: HTMLElement;
     cellLen = 0;
     private isLast = false;
@@ -26,11 +29,13 @@ export class TmRowComponent implements OnInit {
     private _cellUpdateFns: Array<(item: any) => void> = [];
     private item: ITMitemInterface;
 
-    constructor (private treadmillService: TreadmillService, thisEl: ElementRef, private cdr: ChangeDetectorRef) {
+    constructor (private treadmillService: TreadmillService, thisEl: ElementRef,
+        private cdr: ChangeDetectorRef) {
         this.thisHTMLElement = thisEl.nativeElement;
     }
     ngOnInit() {
         this.treadmillService.rowUpdateRowFN = {
+            rowID: this.rowID,
             updateFn: (dw: ITMitemInterface) => this.updateitem(dw),
             getHeightFn: () => this.getHeight(),
             sendCellsFN: (isLast: boolean, cells: string[]) => this.createCells(isLast, cells),
@@ -48,13 +53,21 @@ export class TmRowComponent implements OnInit {
             }
         };
     }
-    updateitem(newItem: ITMitemInterface) {
+    updateitem(newItem: ITMitemInterface): number {
         this.item = newItem;
-        this.thisHTMLElement.style.order = '' + newItem.data.index;
-        if (this._cellUpdateFns.length === 0) { throw ( new Error('Field count must be set')); }
-        this.itemIndex = newItem.index;
-        if (newItem.isEmpty !== true) { this._cellUpdateFns.forEach( cfn => cfn(newItem)); }
+        if (this.itemIndex !== newItem.index) {
+            this.thisHTMLElement.style.order = '' + newItem.index;
+            if (this._cellUpdateFns.length === 0) { throw ( new Error('Field count must be set')); }
+            this.itemIndex = newItem.index;
+        }
+        if (newItem.isEmpty !== true) {
+            this.emptyObsSubj.next(false);
+            this._cellUpdateFns.forEach( cfn => cfn(newItem));
+        } else {
+            this.emptyObsSubj.next(true);
+        }
         this.treadmillService.attachImpetusListeners();
+        return this.rowID;
         // Debug assert
         // if (this.thisHTMLElement.style.order !== newItem.data.index) {
         //     debugger;
