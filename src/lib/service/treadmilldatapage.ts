@@ -1,4 +1,3 @@
-import { ITMitemInterface } from './treadmilldatapage';
 import { TreadmillService } from './treadmill.service';
 export interface ITMitemInterface {
     index: number;
@@ -6,10 +5,7 @@ export interface ITMitemInterface {
     isEmpty: boolean;
 }
 
-export class TmPageOrder {
-    pagesToBe: {dataPageNo: number, pageArrayIndex: number}[];
-    pagesInMemory: number[];
-}
+
 
 export class TmItem implements ITMitemInterface {
     index: number;
@@ -28,7 +24,6 @@ export class TmVisiblePage {
             this.items[i] = new  TmItem(i);
         }
     }
-    getOrderToBe: () => void;
 }
 
 export class TmDataPage {
